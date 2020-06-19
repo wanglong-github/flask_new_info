@@ -33,19 +33,14 @@ $(function(){
 
 
 	// 点击输入框，提示文字上移
-	$('.form_group').on('click focusin',function(){
-		$(this).children('.input_tip').animate({'top':-5,'font-size':12},'fast').siblings('input').focus().parent().addClass('hotline');
-	})
+	$('.form_group').on('click',function(){
+    $(this).children('input').focus()
+    })
 
-	// 输入框失去焦点，如果输入框为空，则提示文字下移
-	$('.form_group input').on('blur focusout',function(){
-		$(this).parent().removeClass('hotline');
-		var val = $(this).val();
-		if(val=='')
-		{
-			$(this).siblings('.input_tip').animate({'top':22,'font-size':14},'fast');
-		}
-	})
+	 $('.form_group input').on('focusin',function(){
+        $(this).siblings('.input_tip').animate({'top':-5,'font-size':12},'fast')
+        $(this).parent().addClass('hotline');
+    })
 
 
 	// 打开注册框
@@ -110,6 +105,29 @@ $(function(){
         }
 
         // 发起登录请求
+          // 拼接参数
+        var params = {
+            "mobile":mobile,
+            "password":password
+        }
+
+        $.ajax({
+            url:'/passport/login',
+            type:'post',
+            data:JSON.stringify(params),
+            contentType:'application/json',
+            headers:{'X-CSRFToken':getCookie('csrf_token')},
+            success: function (resp) {
+                //判断是否登陆成功
+                if(resp.errno == '0'){
+                    window.location.reload()
+                }else{
+                    alert(resp.errmsg);
+                }
+
+            }
+        })
+
     })
 
 
@@ -144,9 +162,43 @@ $(function(){
         }
 
         // 发起注册请求
+         //拼接请求参数
+        var params = {
+            "mobile":mobile,
+            "sms_code":smscode,
+            "password":password
+        }
+
+        $.ajax({
+            url:'/passport/register',
+            type:'post',
+            data:JSON.stringify(params),
+            contentType:'application/json',
+            headers:{'X-CSRFToken':getCookie('csrf_token')},
+            success: function (resp) {
+                //判断是否注册成功
+                if(resp.errno == '0'){
+                    //重新加载当前页面
+                    window.location.reload()
+                }else{
+                    alert(resp.errmsg);
+                }
+            }
+        })
 
     })
 })
+//退出登陆
+function logout() {
+    $.ajax({
+        url:'/passport/logout',
+        type:'post',
+        headers:{'X-CSRFToken':getCookie('csrf_token')},
+        success:function (resp) {
+            window.location.reload()
+        }
+    })
+}
 
 var imageCodeId = ""
 var preimoageCodeId = ""
@@ -155,12 +207,13 @@ var preimoageCodeId = ""
 function generateImageCode() {
     // 生成一个随机字符串
     imageCodeId = generateUUID();
-    // 验证码图片地址
-    image_url = '/passport/image_code?cur_id='+imageCodeId+'&pre_id='+preimageCodeId
-    // 将image_url设置到 image 标签的src属性中
-    $('.get_pic_code').attr('src', image_url)
+     //2.拼接图片url地址
+    image_url = '/passport/image_code?cur_id='+imageCodeId + "&pre_id="+preimageCodeId
 
-    //
+    //3.将地址设置到image标签的src属性中,为image_url
+    $('.get_pic_code').attr('src',image_url)
+
+    //4.记录上一次的编号
     preimageCodeId = imageCodeId
 
 }
@@ -186,34 +239,41 @@ function sendSMSCode() {
 
     var params = {
         "mobile":mobile,
-        "image_code":image_code,
-        "image_code_id":image_code_id
+        "image_code":imageCode,
+        "image_code_id":imageCodeId
     }
     // TODO 发送短信验证码 ajax 请求
     $.ajax({
         url:'/passport/sms_code',
         type:'post',
-        data: JSON.stringify(params),
-        ContentType: 'application/json',
+        data:JSON.stringify(params),
+        contentType:'application/json',
         headers:{'X-CSRFToken':getCookie('csrf_token')},
         success: function (resp) {
             // 判断请求是否成功
             if(resp.errno == '0'){
                   // 倒计时
                 var num = 60;
-                var t  = setInterval(function () {
-                    if (num ==  1){
+                //创建定时器
+                var t = setInterval(function () {
+
+                    //判断是否倒计时结束
+                    if(num == 1){
+                        //清除定时器
                         clearInterval(t)
-                        $(".get_code").attr("onclick", 'sendSMSCode()');
+                          //设置标签点击事件,并设置内容
+                        $(".get_code").attr("onclick",'sendSMSCode()');
                         $(".get_code").html('点击获取验证码');
                     } else {
+                        //设置秒数
                         num -= 1;
-                         $(".get_code").html(num +'秒');
+                        $('.get_code').html(num + '秒');
                     }
                 }, 1000); // 一秒走一次
             }else {
                 alert(resp.errmsg);
-                $(".get_code").attr("onclick", 'sendSMSCode()');
+                 // 重新设置点击事件,更新图片验证码
+                $(".get_code").attr("onclick",'sendSMSCode()');
                 generateImageCode();
             }
 
