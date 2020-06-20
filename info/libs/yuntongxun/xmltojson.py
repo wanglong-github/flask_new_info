@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-# python xml.etree.ElementTree
-
 import os
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
