@@ -11,6 +11,15 @@ from info.utils.response_code import RET
 from . import passport_blu
 import re
 
+# 退出
+@passport_blu.route('/logout', methods=['POST'])
+def logout():
+    """清除session中用户的信息"""
+    session.pop("user_id", None)
+    session.pop("mobile", None)
+    session.pop("nick_name", None)
+    return jsonify(errno=RET.OK, errmsg="OK")
+
 # 登录
 @passport_blu.route('/login', methods=['POST'])
 def login():
@@ -53,6 +62,7 @@ def login():
     current_app.logger.debug('登录成功')
 
     return jsonify(errno=RET.OK, errmsg="登录成功")
+
 
 # 注册功能的实现
 @passport_blu.route('/register', methods=['POST'])
