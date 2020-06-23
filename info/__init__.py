@@ -46,6 +46,10 @@ def create_app(config_name):
 
     from info.utils.common import do_index_class
     app.add_template_filter(do_index_class, "index_class")
+
+    from info.modules.news import news_blu
+    app.register_blueprint(news_blu)
+
     @app.after_request
     def after_request(response):
         csrf_tonken = generate_csrf()
